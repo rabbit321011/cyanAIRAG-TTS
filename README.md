@@ -2,6 +2,9 @@
 # CyanAI - RAG + TTS with 4-Partition Memory Architecture
 
 一个基于 Qwen3 模型的 RAG（检索增强生成）+ TTS（文本转语音）系统，采用四大分区记忆架构。
+本项目只作为cyanAI本体运行的依赖，其他用途我没咋考虑
+基本是AI coding
+用了TRAE和gemini
 
 ## 功能特性
 
@@ -148,7 +151,7 @@ A: 请查看 `testAndReadme/THEAI.md` 中的详细说明。
 
 ## 许可证
 
-本项目仅供学习和研究使用。
+想咋用咋用，如果这个项目能看得上的话。
 
 ---
 
