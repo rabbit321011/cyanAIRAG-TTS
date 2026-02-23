@@ -57,7 +57,7 @@ curl -X POST http://localhost:3723/rag/insert \
   }"
 ```
 
-**table_name可选值**：`event`、`theory`、`object`、`relationship`、`temp`
+**table_name可选值**：`event`、`theory`、`object`、`relationship`、`temp`、`chat`
 
 **响应**：
 ```json
@@ -82,7 +82,7 @@ curl -X POST http://localhost:3723/rag/search/topk \
   }"
 ```
 
-**target_dbs可选值**：`["event"]`、`["theory"]`、`["object"]`、`["relationship"]`、`["temp"]`，或多个组合
+**target_dbs可选值**：`["event"]`、`["theory"]`、`["object"]`、`["relationship"]`、`["temp"]`、`["chat"]`，或多个组合
 
 **响应**：
 ```json
@@ -262,7 +262,7 @@ vector_str = resp.json()["vector_str"]
 resp = requests.post(
     f"{BASE_URL}/rag/search/topk",
     json={
-        "target_dbs": ["event", "theory", "object", "relationship"],
+        "target_dbs": ["event", "theory", "object", "relationship", "temp", "chat"],
         "vector_str": vector_str,
         "k": 5
     }

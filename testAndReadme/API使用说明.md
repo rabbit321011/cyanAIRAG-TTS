@@ -13,7 +13,7 @@
    - [7. 清空单个表接口](#7-清空单个表接口)
    - [8. 清空所有表接口](#8-清空所有表接口)
 3. [向量数据库 (LanceDB) 使用说明](#向量数据库-lancedb-使用说明)
-4. [五大分区记忆架构说明](#五大分区记忆架构说明)
+4. [六大分区记忆架构说明](#六大分区记忆架构说明)
 5. [实现原理](#实现原理)
 6. [性能基准测试](#性能基准测试)
 
@@ -97,7 +97,7 @@ curl -X POST http://localhost:3723/rag/embed ^
 #### 请求参数
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| `table_name` | string | 是 | 目标表名，必须是 `event`、`theory`、`object`、`relationship`、`temp` 之一 |
+| `table_name` | string | 是 | 目标表名，必须是 `event`、`theory`、`object`、`relationship`、`temp`、`chat` 之一 |
 | `vector_str` | string | 是 | 字符串化的向量数组 |
 | `data_str` | string | 是 | 字符串化的 JSON 数据 |
 
@@ -129,7 +129,7 @@ curl -X POST http://localhost:3723/rag/insert ^
 #### 请求参数
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| `target_dbs` | list[string] | 是 | 目标表数组，可以包含一个或多个表（`event`、`theory`、`object`、`relationship`、`temp`） |
+| `target_dbs` | list[string] | 是 | 目标表数组，可以包含一个或多个表（`event`、`theory`、`object`、`relationship`、`temp`、`chat`） |
 | `vector_str` | string | 是 | 字符串化的查询向量 |
 | `k` | integer | 是 | 返回结果的数量 |
 
@@ -164,7 +164,7 @@ curl -X POST http://localhost:3723/rag/search/topk ^
 #### 请求参数
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| `target_dbs` | list[string] | 是 | 目标表数组，可以包含一个或多个表（`event`、`theory`、`object`、`relationship`、`temp`） |
+| `target_dbs` | list[string] | 是 | 目标表数组，可以包含一个或多个表（`event`、`theory`、`object`、`relationship`、`temp`、`chat`） |
 | `vector_str` | string | 是 | 字符串化的查询向量 |
 | `threshold` | float | 是 | 相似度阈值（0-1之间） |
 
@@ -198,7 +198,7 @@ curl -X POST http://localhost:3723/rag/search/threshold ^
 #### 请求参数
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| `table_name` | string | 是 | 目标表名，必须是 `event`、`theory`、`object`、`relationship`、`temp` 之一 |
+| `table_name` | string | 是 | 目标表名，必须是 `event`、`theory`、`object`、`relationship`、`temp`、`chat` 之一 |
 | `data_str` | string | 是 | 存入时的 JSON 字符串（需要完全匹配） |
 
 #### 请求示例
@@ -260,7 +260,7 @@ curl -X POST http://localhost:3723/rag/rerank ^
 #### 请求参数
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| `table_name` | string | 是 | 目标表名，必须是 `event`、`theory`、`object`、`relationship`、`temp` 之一 |
+| `table_name` | string | 是 | 目标表名，必须是 `event`、`theory`、`object`、`relationship`、`temp`、`chat` 之一 |
 
 #### 请求示例
 ```bash
@@ -311,8 +311,8 @@ curl -X POST http://localhost:3723/rag/clear/all
 - **存储目录**: `e:\AIlibs\lancedb_data`
 - **向量维度**: 根据使用的 Embedding 模型自动确定
 
-### 五大分区表结构
-系统采用"五大分区记忆"架构，将数据存储在五个独立的表中：
+### 六大分区表结构
+系统采用"六大分区记忆"架构，将数据存储在六个独立的表中：
 
 | 表名 | 说明 | 用途 |
 |------|------|------|
@@ -321,6 +321,7 @@ curl -X POST http://localhost:3723/rag/clear/all
 | `object` | 对象表 | 存储实体、物品、人物等信息 |
 | `relationship` | 关系表 | 存储关系、连接、关联等信息 |
 | `temp` | 临时表 | 存储临时数据、缓存等信息 |
+| `chat` | 对话表 | 存储对话历史、聊天记录等信息 |
 
 ### 单表结构（每个表都相同）
 | 字段名 | 类型 | 说明 |
@@ -335,10 +336,10 @@ curl -X POST http://localhost:3723/rag/clear/all
 
 ---
 
-## 五大分区记忆架构说明
+## 六大分区记忆架构说明
 
 ### 设计理念
-将知识库按照认知科学中的记忆分类原则，划分为五个独立的向量数据库表，实现更精细的知识组织和检索。
+将知识库按照认知科学中的记忆分类原则，划分为六个独立的向量数据库表，实现更精细的知识组织和检索。
 
 ### 核心特点
 
@@ -367,7 +368,8 @@ curl -X POST http://localhost:3723/rag/clear/all
 | 保存人物档案 | `object` | 实体、对象类信息 |
 | 记录人际关系 | `relationship` | 关系、连接类信息 |
 | 临时数据存储 | `temp` | 临时数据、缓存类 |
-| 全面搜索相关信息 | `["event", "theory", "object", "relationship", "temp"]` | 跨表全局检索 |
+| 对话历史存储 | `chat` | 对话历史、聊天记录类 |
+| 全面搜索相关信息 | `["event", "theory", "object", "relationship", "temp", "chat"]` | 跨表全局检索 |
 
 ---
 
@@ -388,14 +390,15 @@ curl -X POST http://localhost:3723/rag/clear/all
 - 将文本转换为高维向量表示
 - 保留语义信息
 
-#### 2. 五大分区记忆架构
-- **设计思路**: 按照认知科学的记忆分类原则，将知识库划分为五个独立的向量数据库表
-- **五个分区表**:
+#### 2. 六大分区记忆架构
+- **设计思路**: 按照认知科学的记忆分类原则，将知识库划分为六个独立的向量数据库表
+- **六个分区表**:
   - `event`: 事件、经历、时间线
   - `theory`: 知识、理论、概念
   - `object`: 实体、物品、人物
   - `relationship`: 关系、连接、关联
   - `temp`: 临时数据、缓存
+  - `chat`: 对话历史、聊天记录
 - **优势**: 实现更精细的知识组织，支持针对性检索和全局检索
 
 #### 3. 向量存储

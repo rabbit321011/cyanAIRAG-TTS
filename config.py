@@ -25,7 +25,7 @@ EMBEDDING_MODEL_PATH = "Qwen/Qwen3-Embedding-0.6B"
 # LanceDB 数据库存储目录
 LANCEDB_DIR = os.path.join(BASE_DIR, "lancedb_data")
 # 定义核心记忆分区的表名
-ALLOWED_TABLES = ["event", "theory", "object", "relationship", "temp"]
+ALLOWED_TABLES = ["event", "theory", "object", "relationship", "temp", "chat"]
 
 # --- 新增: Rerank 重排序模型配置 ---
 RERANK_MODEL_PATH = "Qwen/Qwen3-Reranker-0.6B"

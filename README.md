@@ -1,14 +1,14 @@
 
-# CyanAI - RAG + TTS with 4-Partition Memory Architecture
+# CyanAI - RAG + TTS with 6-Partition Memory Architecture
 
-一个基于 Qwen3 模型的 RAG（检索增强生成）+ TTS（文本转语音）系统，采用四大分区记忆架构。
+一个基于 Qwen3 模型的 RAG（检索增强生成）+ TTS（文本转语音）系统，采用六大分区记忆架构。
 本项目只作为cyanAI本体运行的依赖，其他用途我没咋考虑
 基本是AI coding
 用了TRAE和gemini
 
 ## 功能特性
 
-- ✅ **五大分区记忆架构**：event（事件）、theory（理论）、object（对象）、relationship（关系）、temp（临时）
+- ✅ **六大分区记忆架构**：event（事件）、theory（理论）、object（对象）、relationship（关系）、temp（临时）、chat（对话）
 - ✅ **RAG 向量检索**：支持 Top-K 和阈值搜索
 - ✅ **智能重排序**：使用 Qwen3-Reranker 进行相关性排序
 - ✅ **声音克隆 TTS**：基于 Qwen3-TTS 的声音克隆功能
