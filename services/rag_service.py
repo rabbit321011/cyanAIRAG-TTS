@@ -46,7 +46,7 @@ schema = pa.schema([
 tables = {}
 for table_name in ALLOWED_TABLES:
     tables[table_name] = db.create_table(table_name, schema=schema, exist_ok=True)
-print(f"LanceDB initialized. 4 partitioned tables are ready.")
+print(f"LanceDB initialized. {len(ALLOWED_TABLES)} partitioned tables are ready.")
 
 
 def validate_table_name(table_name: str):
@@ -138,7 +138,7 @@ def search_by_threshold(vector_str: str, threshold: float, target_dbs: list) -> 
 def calculate_rerank_scores(query: str, targets: list) -> list:
     if not targets:
         return []
-        
+    
     scores = []
     
     instruction = "Given a web search query, retrieve relevant passages that answer the query"
@@ -177,3 +177,19 @@ def calculate_rerank_scores(query: str, targets: list) -> list:
             scores.append(0.0)
             
     return scores
+
+
+def clear_table(table_name: str) -> None:
+    validate_table_name(table_name)
+    try:
+        tables[table_name].delete(where="true")
+    except Exception as e:
+        raise Exception(f"Failed to clear table '{table_name}': {str(e)}")
+
+
+def clear_all_tables() -> None:
+    try:
+        for table_name in ALLOWED_TABLES:
+            tables[table_name].delete(where="true")
+    except Exception as e:
+        raise Exception(f"Failed to clear all tables: {str(e)}")

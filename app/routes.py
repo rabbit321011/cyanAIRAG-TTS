@@ -63,7 +63,9 @@ from services.rag_service import (
     search_global_top_k,
     search_by_threshold,
     delete_by_data,
-    calculate_rerank_scores
+    calculate_rerank_scores,
+    clear_table,
+    clear_all_tables
 )
 
 # --- 新增: RAG 相关的 API 接口 ---
@@ -143,5 +145,26 @@ def rag_rerank():
             
         scores = calculate_rerank_scores(query, targets)
         return jsonify({"status": "success", "scores": scores}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@bp.route('/rag/clear/table', methods=['POST'])
+def rag_clear_table():
+    data = request.get_json()
+    if not data or 'table_name' not in data:
+        return jsonify({"status": "error", "message": "Missing 'table_name' in request"}), 400
+    try:
+        clear_table(data['table_name'])
+        return jsonify({"status": "success", "message": f"Table '{data['table_name']}' cleared successfully."}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@bp.route('/rag/clear/all', methods=['POST'])
+def rag_clear_all():
+    try:
+        clear_all_tables()
+        return jsonify({"status": "success", "message": "All tables cleared successfully."}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500

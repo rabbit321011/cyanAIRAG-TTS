@@ -1,3 +1,4 @@
+
 # CyanAI API 使用说明
 
 ## 目录
@@ -9,9 +10,12 @@
    - [4. 全局阈值搜索接口](#4-全局阈值搜索接口)
    - [5. 数据删除接口](#5-数据删除接口)
    - [6. 重排序 (Rerank) 接口](#6-重排序-rerank-接口)
+   - [7. 清空单个表接口](#7-清空单个表接口)
+   - [8. 清空所有表接口](#8-清空所有表接口)
 3. [向量数据库 (LanceDB) 使用说明](#向量数据库-lancedb-使用说明)
-4. [四大分区记忆架构说明](#四大分区记忆架构说明)
+4. [五大分区记忆架构说明](#五大分区记忆架构说明)
 5. [实现原理](#实现原理)
+6. [性能基准测试](#性能基准测试)
 
 ---
 
@@ -93,7 +97,7 @@ curl -X POST http://localhost:3723/rag/embed ^
 #### 请求参数
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| `table_name` | string | 是 | 目标表名，必须是 `event`、`theory`、`object`、`relationship` 之一 |
+| `table_name` | string | 是 | 目标表名，必须是 `event`、`theory`、`object`、`relationship`、`temp` 之一 |
 | `vector_str` | string | 是 | 字符串化的向量数组 |
 | `data_str` | string | 是 | 字符串化的 JSON 数据 |
 
@@ -125,7 +129,7 @@ curl -X POST http://localhost:3723/rag/insert ^
 #### 请求参数
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| `target_dbs` | list[string] | 是 | 目标表数组，可以包含一个或多个表（`event`、`theory`、`object`、`relationship`） |
+| `target_dbs` | list[string] | 是 | 目标表数组，可以包含一个或多个表（`event`、`theory`、`object`、`relationship`、`temp`） |
 | `vector_str` | string | 是 | 字符串化的查询向量 |
 | `k` | integer | 是 | 返回结果的数量 |
 
@@ -160,7 +164,7 @@ curl -X POST http://localhost:3723/rag/search/topk ^
 #### 请求参数
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| `target_dbs` | list[string] | 是 | 目标表数组，可以包含一个或多个表（`event`、`theory`、`object`、`relationship`） |
+| `target_dbs` | list[string] | 是 | 目标表数组，可以包含一个或多个表（`event`、`theory`、`object`、`relationship`、`temp`） |
 | `vector_str` | string | 是 | 字符串化的查询向量 |
 | `threshold` | float | 是 | 相似度阈值（0-1之间） |
 
@@ -194,7 +198,7 @@ curl -X POST http://localhost:3723/rag/search/threshold ^
 #### 请求参数
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| `table_name` | string | 是 | 目标表名，必须是 `event`、`theory`、`object`、`relationship` 之一 |
+| `table_name` | string | 是 | 目标表名，必须是 `event`、`theory`、`object`、`relationship`、`temp` 之一 |
 | `data_str` | string | 是 | 存入时的 JSON 字符串（需要完全匹配） |
 
 #### 请求示例
@@ -245,14 +249,70 @@ curl -X POST http://localhost:3723/rag/rerank ^
 
 ---
 
+### 7. 清空单个表接口
+清空指定分区表中的所有数据（保留表结构）。
+
+#### API 端点
+- **URL**: `/rag/clear/table`
+- **方法**: `POST`
+- **Content-Type**: `application/json`
+
+#### 请求参数
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| `table_name` | string | 是 | 目标表名，必须是 `event`、`theory`、`object`、`relationship`、`temp` 之一 |
+
+#### 请求示例
+```bash
+curl -X POST http://localhost:3723/rag/clear/table ^
+  -H "Content-Type: application/json" ^
+  -d "{\"table_name\": \"temp\"}"
+```
+
+#### 响应示例
+```json
+{
+  "status": "success",
+  "message": "Table 'temp' cleared successfully."
+}
+```
+
+---
+
+### 8. 清空所有表接口
+清空所有分区表中的数据（保留表结构）。
+
+#### API 端点
+- **URL**: `/rag/clear/all`
+- **方法**: `POST`
+- **Content-Type**: `application/json`
+
+#### 请求参数
+无
+
+#### 请求示例
+```bash
+curl -X POST http://localhost:3723/rag/clear/all
+```
+
+#### 响应示例
+```json
+{
+  "status": "success",
+  "message": "All tables cleared successfully."
+}
+```
+
+---
+
 ## 向量数据库 (LanceDB) 使用说明
 
 ### 数据库配置
 - **存储目录**: `e:\AIlibs\lancedb_data`
 - **向量维度**: 根据使用的 Embedding 模型自动确定
 
-### 四大分区表结构
-系统采用"四大分区记忆"架构，将数据存储在四个独立的表中：
+### 五大分区表结构
+系统采用"五大分区记忆"架构，将数据存储在五个独立的表中：
 
 | 表名 | 说明 | 用途 |
 |------|------|------|
@@ -260,6 +320,7 @@ curl -X POST http://localhost:3723/rag/rerank ^
 | `theory` | 理论表 | 存储知识、理论、概念等信息 |
 | `object` | 对象表 | 存储实体、物品、人物等信息 |
 | `relationship` | 关系表 | 存储关系、连接、关联等信息 |
+| `temp` | 临时表 | 存储临时数据、缓存等信息 |
 
 ### 单表结构（每个表都相同）
 | 字段名 | 类型 | 说明 |
@@ -274,10 +335,10 @@ curl -X POST http://localhost:3723/rag/rerank ^
 
 ---
 
-## 四大分区记忆架构说明
+## 五大分区记忆架构说明
 
 ### 设计理念
-将知识库按照认知科学中的记忆分类原则，划分为四个独立的向量数据库表，实现更精细的知识组织和检索。
+将知识库按照认知科学中的记忆分类原则，划分为五个独立的向量数据库表，实现更精细的知识组织和检索。
 
 ### 核心特点
 
@@ -305,7 +366,8 @@ curl -X POST http://localhost:3723/rag/rerank ^
 | 存储机器学习知识 | `theory` | 理论、概念、知识类 |
 | 保存人物档案 | `object` | 实体、对象类信息 |
 | 记录人际关系 | `relationship` | 关系、连接类信息 |
-| 全面搜索相关信息 | `["event", "theory", "object", "relationship"]` | 跨表全局检索 |
+| 临时数据存储 | `temp` | 临时数据、缓存类 |
+| 全面搜索相关信息 | `["event", "theory", "object", "relationship", "temp"]` | 跨表全局检索 |
 
 ---
 
@@ -326,13 +388,14 @@ curl -X POST http://localhost:3723/rag/rerank ^
 - 将文本转换为高维向量表示
 - 保留语义信息
 
-#### 2. 四大分区记忆架构
-- **设计思路**: 按照认知科学的记忆分类原则，将知识库划分为四个独立的向量数据库表
-- **四个分区表**:
+#### 2. 五大分区记忆架构
+- **设计思路**: 按照认知科学的记忆分类原则，将知识库划分为五个独立的向量数据库表
+- **五个分区表**:
   - `event`: 事件、经历、时间线
   - `theory`: 知识、理论、概念
   - `object`: 实体、物品、人物
   - `relationship`: 关系、连接、关联
+  - `temp`: 临时数据、缓存
 - **优势**: 实现更精细的知识组织，支持针对性检索和全局检索
 
 #### 3. 向量存储
@@ -359,7 +422,12 @@ curl -X POST http://localhost:3723/rag/rerank ^
 - 自动处理 SQL 注入风险（转义单引号）
 - 使用 LanceDB 的条件删除语法
 
-#### 7. 重排序 (Rerank) 实现原理
+#### 7. 表清空功能
+- `clear_table()`: 清空指定表的所有数据（保留表结构）
+- `clear_all_tables()`: 清空所有表的所有数据（保留表结构）
+- 使用 `delete(where="true")` 语法删除所有记录
+
+#### 8. 重排序 (Rerank) 实现原理
 - **模型**: 使用 `Qwen/Qwen3-Reranker-0.6B`（CausalLM 因果语言模型）
 - **核心逻辑**:
   1. 构造特定的 Prompt 格式（包含 Query、Document 和判断指令）
@@ -384,3 +452,56 @@ cyanai-python-server/
 ├── audio/                 # 音频输出目录
 └── lancedb_data/          # 向量数据库目录
 ```
+
+---
+
+## 性能基准测试
+
+### 测试环境
+- 测试日期: 2026-02-23
+- 向量模型: Qwen/Qwen3-Embedding-0.6B
+- 数据库: LanceDB
+- 数据集规模: 200 条测试数据
+- 测试文本长度: 约 100-150 字
+
+### 测试结果
+
+| 操作 | 平均耗时 | 说明 |
+|------|---------|------|
+| **单条文本向量化** | **48.39 ms** | 约 100 字中文文本 |
+| **批量插入数据** | **120.46 ms/条** | 200 条总耗时 24.09 秒 |
+| **Top-K 检索 (K=5)** | **22.79 ms** | 在 200 条数据中检索 |
+| **阈值检索 (threshold=0.8)** | **70.66 ms** | 返回 100 条结果 |
+
+### 详细测试数据
+
+#### 1. 文本向量化
+- 第 1 次: 98.93 ms (首次加载稍慢)
+- 第 2-10 次: 29-55 ms (稳定)
+- **平均: 48.39 ms**
+
+#### 2. 批量插入
+- 测试规模: 200 条记录
+- 单条平均: 120.46 ms
+- **总耗时: 24.09 秒**
+
+#### 3. Top-K 向量检索
+- 第 1 次: 116.96 ms (首次加载稍慢)
+- 第 2-20 次: 16-20 ms (稳定)
+- **平均: 22.79 ms**
+
+#### 4. 阈值检索
+- 阈值设置: 0.8
+- 返回结果数: 100 条
+- **平均: 70.66 ms**
+
+### 性能特点
+
+1. **首次调用**: 向量化和检索的首次调用会稍慢（预热），后续调用速度稳定
+2. **检索效率**: Top-K 检索非常快，平均仅 22.79 ms，适合实时应用
+3. **插入性能**: 单条插入约 120 ms，批量插入 200 条约 24 秒
+4. **阈值检索**: 由于需要返回更多结果（100条），耗时较长，约 70 ms
+
+### 测试脚本
+
+完整的基准测试脚本位于: `test0223/benchmark_test.py`

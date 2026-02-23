@@ -8,7 +8,7 @@
 
 ## 功能特性
 
-- ✅ **四大分区记忆架构**：event（事件）、theory（理论）、object（对象）、relationship（关系）
+- ✅ **五大分区记忆架构**：event（事件）、theory（理论）、object（对象）、relationship（关系）、temp（临时）
 - ✅ **RAG 向量检索**：支持 Top-K 和阈值搜索
 - ✅ **智能重排序**：使用 Qwen3-Reranker 进行相关性排序
 - ✅ **声音克隆 TTS**：基于 Qwen3-TTS 的声音克隆功能

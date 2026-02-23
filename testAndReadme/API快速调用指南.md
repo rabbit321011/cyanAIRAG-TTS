@@ -57,7 +57,7 @@ curl -X POST http://localhost:3723/rag/insert \
   }"
 ```
 
-**table_name可选值**：`event`、`theory`、`object`、`relationship`
+**table_name可选值**：`event`、`theory`、`object`、`relationship`、`temp`
 
 **响应**：
 ```json
@@ -82,7 +82,7 @@ curl -X POST http://localhost:3723/rag/search/topk \
   }"
 ```
 
-**target_dbs可选值**：`["event"]`、`["theory"]`、`["object"]`、`["relationship"]`，或多个组合
+**target_dbs可选值**：`["event"]`、`["theory"]`、`["object"]`、`["relationship"]`、`["temp"]`，或多个组合
 
 **响应**：
 ```json
@@ -176,6 +176,42 @@ curl -X POST http://localhost:3723/rag/rerank \
 
 ---
 
+### 2.7 清空单个表
+
+**请求**：
+```bash
+curl -X POST http://localhost:3723/rag/clear/table \
+  -H "Content-Type: application/json" \
+  -d "{\"table_name\": \"temp\"}"
+```
+
+**响应**：
+```json
+{
+  "status": "success",
+  "message": "Table 'temp' cleared successfully."
+}
+```
+
+---
+
+### 2.8 清空所有表
+
+**请求**：
+```bash
+curl -X POST http://localhost:3723/rag/clear/all
+```
+
+**响应**：
+```json
+{
+  "status": "success",
+  "message": "All tables cleared successfully."
+}
+```
+
+---
+
 ## 3. TTS 接口
 
 ### 文本转语音（声音克隆）
@@ -255,5 +291,7 @@ for res in results:
 | 阈值搜索 | POST | `/rag/search/threshold` |
 | 删除数据 | POST | `/rag/delete` |
 | 重排序 | POST | `/rag/rerank` |
+| 清空单个表 | POST | `/rag/clear/table` |
+| 清空所有表 | POST | `/rag/clear/all` |
 | TTS生成 | POST | `/tts/generate` |
 
