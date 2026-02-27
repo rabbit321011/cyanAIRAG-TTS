@@ -1,35 +1,26 @@
-以下是更新后的完整 Markdown 文档，已经整合了我们今天的所有进展，包括：
-
-- 如何进入/退出虚拟环境（详细步骤 + 常见问题）
-- TTS 支持的语言列表（完整 + 推荐用法）
-- 所有组件的最新使用方式（尤其是 TTS 的克隆接口、ref_text 重要性、x_vector_only_mode 等）
-- 显存管理、常见坑点、后续扩展建议
-
-你可以直接复制保存为 `Qwen3-Agent-本地环境搭建记录.md`，放在 E:\AIlibs\ 目录下，方便以后开发时随时查阅。
-
 # Qwen3 Agent 本地环境搭建记录（RTX 5070 Ti Laptop 12GB VRAM）
 
-**日期**：2026年2月22日  
+**日期**：2026年2月27日  
 **操作系统**：Windows  
 **GPU**：NVIDIA GeForce RTX 5070 Ti Laptop GPU（12GB GDDR7）  
 **CUDA**：12.8  
 **Python**：3.13.7（虚拟环境 agent-env）  
-**目标**：搭建 Qwen3-Embedding-0.6B + Qwen3-Reranker-0.6B + Qwen3-TTS-1.7B-Base + LanceDB 的本地环境，用于个人 Agent 开发（支持声音克隆 TTS）。
+**目标**：搭建 Qwen3-Embedding-0.6B + Qwen3-Reranker-0.6B + Qwen3-TTS-0.6B-CustomVoice + LanceDB 的本地环境，用于个人 Agent 开发（支持 Custom Voice TTS）。
 
-## 1. 最终环境状态（2026-02-22 成功验证）
+## 1. 最终环境状态（2026-02-27 成功验证）
 
 - **PyTorch**：2.10.0+cu128（CUDA 可用）
 - **Flash Attention**：2.8.3（wheel 安装成功，支持加速 & 省显存）
 - **核心组件**：
   - Embedding：Qwen/Qwen3-Embedding-0.6B（sentence-transformers 加载）
   - Reranker：Qwen/Qwen3-Reranker-0.6B（transformers CausalLM + yes/no logits 概率打分）
-  - TTS：Qwen/Qwen3-TTS-12Hz-1.7B-Base（qwen-tts 包，generate_voice_clone 接口，支持声音克隆）
+  - TTS：Qwen3-TTS-0.6B-CustomVoice（qwen-tts 包，generate_custom_voice 接口，支持 Custom Voice）
   - 向量数据库：LanceDB 0.29.2
 - **显存占用估算**（动态加载，按需 del + empty_cache）：
   - Embedding 0.6B：~1.5GB
   - Reranker 0.6B：~1.8GB
-  - TTS 1.7B Base（克隆生成峰值）：~7–9GB
-  - 总峰值控制在 10–11GB 内（12GB 显卡可承受）
+  - TTS 0.6B Custom Voice（生成峰值）：~5–7GB
+  - 总峰值控制在 8–10GB 内（12GB 显卡可承受）
 
 ## 2. 如何进入/退出虚拟环境（重要！）
 
@@ -95,7 +86,7 @@ pip install -U qwen-tts soundfile
 - 安装到：`C:\Program Files (x86)\sox-14-4-2`
 - 添加到系统 PATH：
   
-  - 右键“此电脑” → 属性 → 高级系统设置 → 环境变量 → 系统变量 Path → 编辑 → 新增 `C:\Program Files (x86)\sox-14-4-2`
+  - 右键"此电脑" → 属性 → 高级系统设置 → 环境变量 → 系统变量 Path → 编辑 → 新增 `C:\Program Files (x86)\sox-14-4-2`
 - 验证：
   ```powershell
   sox --version
@@ -127,16 +118,12 @@ no_id = rerank_tokenizer.convert_tokens_to_ids("no")
 
 def get_rerank_score(query, doc):
     prompt = f"""<|im_start|>system
-Judge whether the Document meets the requirements based on the Query and the Instruct provided. Note that the answer can only be "yes" or "no".<|im_end>
+Judge whether the Document meets the requirements based on the Query and Instruct provided. Note that the answer can only be "yes" or "no".<|im_end>
 <|im_start|>user
 <Instruct>: Given a web search query, retrieve relevant passages that answer the query
 <Query>: {query}
 <Document>: {doc}<|im_end>
 <|im_start|>assistant
-<think>
-
-</think>
-
 """
     inputs = rerank_tokenizer(prompt, return_tensors="pt", max_length=8192, truncation=True).to(device)
     outputs = rerank_model(**inputs)
@@ -145,7 +132,7 @@ Judge whether the Document meets the requirements based on the Query and the Ins
     return probs[0, 1].item()  # yes 概率作为相关性分数
 ```
 
-### 4.3 TTS (Qwen3-TTS-12Hz-1.7B-Base) – 支持声音克隆
+### 4.3 TTS (Qwen3-TTS-0.6B-CustomVoice) – 支持 Custom Voice
 
 **支持的语言**（必须用英文全称或 'auto'，不要用 'zh'）：
 - 'auto'（自动检测，最推荐）
@@ -160,36 +147,38 @@ Judge whether the Document meets the requirements based on the Query and the Ins
 - 'russian'
 - 'spanish'
 
-**使用方式**（必须提供参考音频和参考文本）：
+**使用方式**（使用 fine-tune 的 Custom Voice 模型）：
 ```python
 from qwen_tts import Qwen3TTSModel
 import soundfile as sf
 
 tts_model = Qwen3TTSModel.from_pretrained(
-    "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
-    torch_dtype=torch.bfloat16,
-    attn_implementation="flash_attention_2",
-    device_map="auto"
+    r"E:\AIlibs\Qwen3-TTS-0.6B-CustomVoice-base",
+    torch_dtype=torch.float32,      # 必须float32！float16会导致nan/inf和CUDA assert
+    device_map="cuda:0",
+    trust_remote_code=True,
 )
 
-ref_audio = r"E:\AIlibs\input.wav"          # 你的参考音频路径（3–10s 清晰语音）
-ref_text = "你好，这是我的参考语音样本。"   # 必须准确匹配音频里说的话！
-
-wavs, sr = tts_model.generate_voice_clone(
+wavs, sr = tts_model.generate_custom_voice(
     text="你好！这是测试文本。",
     language="chinese",                     # 或 "auto"
-    speed=1.0,
-    ref_audio=ref_audio,
-    ref_text=ref_text,
-    # 可选：x_vector_only_mode=True         # 只用声纹特征，不强制文本匹配（克隆更稳定）
+    speaker="yoeawa",                       # 使用 fine-tune 的 speaker
+    instruct="用自然亲切的语气说",           # 控制语气和表达方式
+    temperature=0.65,                      # 降低，避免nan/inf
+    top_p=0.92,
+    repetition_penalty=1.15,                # 防止重复/爆炸
+    max_new_tokens=1200,
+    do_sample=True
 )
 
-sf.write("output_cloned.wav", wavs[0], sr)
+sf.write("output_custom_voice.wav", wavs[0], sr)
 ```
 
 **注意**：
-- ref_text 不准会导致音色失真、杂音、怪腔。
-- speed 范围建议 0.8–1.2，过快/慢会不自然。
+- 使用 fine-tune 的 Custom Voice 模型，无需参考音频
+- speaker 参数必须与 fine-tune 模型配置一致（如 "yoeawa"）
+- instruct 参数支持中文长描述，用于控制语气和表达方式
+- torch_dtype 必须使用 float32，float16 会导致 nan/inf 和 CUDA assert
 - 生成后记得 `del tts_model; torch.cuda.empty_cache()`
 
 ### 4.4 LanceDB 示例（向量存储）
@@ -207,8 +196,8 @@ results = table.search(query_emb).limit(5).to_pandas()
 - **TTS 语言**：只支持上面列表的英文全称或 'auto'，'zh' 会报错
 - **SoX**：必须安装并加 PATH，否则 TTS 生成失败
 - **symlinks warning**：Windows 可忽略，或设置环境变量 `HF_HUB_DISABLE_SYMLINKS_WARNING=1`
-- **torch_dtype deprecated**：可改用 `dtype=torch.bfloat16`
-- **声音克隆质量**：ref_text 越准确越好；参考音频越清晰（无背景噪音）越好
+- **torch_dtype**：Custom Voice 模型必须使用 float32，否则会导致 nan/inf 和 CUDA assert
+- **Custom Voice 质量**：使用 fine-tune 的模型，通过 instruct 参数控制语气和表达方式
 - **后续扩展建议**：
   1. 加小 LLM（Qwen3-4B/8B-Instruct）生成回复文本
   2. 完整 RAG 流程：Embedding 检索 → Reranker 重排 → LLM 生成 → TTS 语音输出
@@ -219,10 +208,9 @@ results = table.search(query_emb).limit(5).to_pandas()
 
 - Qwen3-Embedding：https://huggingface.co/Qwen/Qwen3-Embedding-0.6B
 - Qwen3-Reranker：https://huggingface.co/Qwen/Qwen3-Reranker-0.6B
-- Qwen3-TTS Base：https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base
+- Qwen3-TTS Custom Voice：https://huggingface.co/Qwen/Qwen3-TTS-0.6B-CustomVoice-base
 - qwen-tts GitHub：https://github.com/QwenLM/Qwen-TTS
 - Flash Attention wheel：https://huggingface.co/Wildminder/AI-windows-whl
 
-**文档最后更新**：2026-02-22  
+**文档最后更新**：2026-02-27  
 祝开发顺利！如需扩展 RAG/LLM/交互部分，随时补充。
-

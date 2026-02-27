@@ -1,4 +1,3 @@
-
 # CyanAI API 使用说明
 
 ## 目录
@@ -22,7 +21,7 @@
 ## TTS (文本转语音) 接口
 
 ### 功能说明
-使用 Qwen3-TTS 模型，基于参考音频克隆声音，生成新的语音。
+使用 Qwen3-TTS-0.6B-CustomVoice 模型，基于 fine-tune 的 Custom Voice 模型生成语音，无需参考音频。
 
 ### API 端点
 - **URL**: `/tts/generate`
@@ -32,15 +31,17 @@
 ### 请求参数
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| `reference_audio_path` | string | 是 | 参考音频的完整路径 |
 | `text` | string | 是 | 需要合成的文本内容 |
-| `ref_text` | string | 否 | 参考音频的文本内容（可选，提高克隆质量） |
+| `instruct` | string | 否 | 语气和表达方式的描述（支持中文长描述，可空） |
+| `language` | string | 否 | 合成语音的语言（可选，默认为"Chinese"）<br>支持的值："auto"、"chinese"、"english"、"japanese"、"korean"、"german"、"french"、"russian"、"portuguese"、"spanish"、"italian" |
+| `temperature` | float | 否 | 控制生成的随机性（可选，默认为0.65）<br>范围：0.0-2.0（推荐0.5-1.0）<br>值越低越稳定，值越高越多样 |
+| `top_p` | float | 否 | 核采样参数（可选，默认为0.92）<br>范围：0.0-1.0（推荐0.8-0.95）<br>只保留累积概率达到该值的token |
 
 ### 请求示例
 ```bash
 curl -X POST http://localhost:3723/tts/generate ^
   -H "Content-Type: application/json" ^
-  -d "{\"reference_audio_path\": \"E:\\AIlibs\\input.wav\", \"text\": \"你好，cyanAI！\"}"
+  -d "{\"text\": \"你好，cyanAI！\", \"instruct\": \"用自然亲切的语气说\", \"language\": \"Chinese\", \"temperature\": 0.65, \"top_p\": 0.92}"
 ```
 
 ### 响应示例
@@ -48,7 +49,7 @@ curl -X POST http://localhost:3723/tts/generate ^
 {
   "status": "success",
   "message": "Audio generated successfully.",
-  "generated_audio_path": "e:\\AIlibs\\audio\\20260223_015323.wav"
+  "generated_audio_path": "e:\\AIlibs\\audio\\20260227_193319.wav"
 }
 ```
 
@@ -377,10 +378,11 @@ curl -X POST http://localhost:3723/rag/clear/all
 
 ### TTS (文本转语音) 实现原理
 
-1. **模型加载**: 启动时加载 `Qwen/Qwen3-TTS-12Hz-1.7B-Base` 模型
-2. **声音克隆**: 使用 `generate_voice_clone` 方法
-   - 输入参考音频提取声纹特征
-   - 基于声纹特征和目标文本生成新语音
+1. **模型加载**: 启动时加载 `Qwen3-TTS-0.6B-CustomVoice` 模型（fine-tune 的 Custom Voice 模型）
+2. **Custom Voice 生成**: 使用 `generate_custom_voice` 方法
+   - 输入目标文本和 instruct 参数
+   - 基于 fine-tune 的 speaker 生成新语音
+   - 通过 instruct 参数控制语气和表达方式
 3. **音频输出**: 使用 soundfile 库保存为 WAV 格式
 
 ### RAG (检索增强生成) 实现原理
@@ -461,7 +463,7 @@ cyanai-python-server/
 ## 性能基准测试
 
 ### 测试环境
-- 测试日期: 2026-02-23
+- 测试日期: 2026-02-27
 - 向量模型: Qwen/Qwen3-Embedding-0.6B
 - 数据库: LanceDB
 - 数据集规模: 200 条测试数据

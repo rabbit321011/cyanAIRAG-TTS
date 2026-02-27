@@ -1,18 +1,18 @@
-
 # CyanAI - RAG + TTS with 6-Partition Memory Architecture
 
 一个基于 Qwen3 模型的 RAG（检索增强生成）+ TTS（文本转语音）系统，采用六大分区记忆架构。
-本项目只作为cyanAI本体运行的依赖，其他用途我没咋考虑
-基本是AI coding
-用了TRAE和gemini
+
+本项目只作为cyanAI本体运行的依赖，其他用途我没咋考虑。
+基本是AI coding，用了TRAE和gemini。
 
 ## 功能特性
 
 - ✅ **六大分区记忆架构**：event（事件）、theory（理论）、object（对象）、relationship（关系）、temp（临时）、chat（对话）
 - ✅ **RAG 向量检索**：支持 Top-K 和阈值搜索
 - ✅ **智能重排序**：使用 Qwen3-Reranker 进行相关性排序
-- ✅ **声音克隆 TTS**：基于 Qwen3-TTS 的声音克隆功能
+- ✅ **Custom Voice TTS**：基于 Qwen3-TTS-0.6B-CustomVoice 的自定义语音合成
 - ✅ **Flash Attention 2**：高效的注意力计算
+- ✅ **灵活的TTS参数**：支持 temperature 和 top_p 参数调整
 
 ---
 
@@ -65,11 +65,24 @@ pip install flash_attn-2.8.3+cu128torch2.10-cp313-cp313-win_amd64.whl
 
 ### 6. 启动服务
 
+**方式一：使用启动脚本（推荐）**
+
 ```bash
+start.bat
+```
+
+**方式二：手动启动**
+
+```bash
+# Windows PowerShell
+& 'E:\AIlibs\agent-env\Scripts\activate.ps1'
+$env:CUDA_LAUNCH_BLOCKING=1
 python run.py
 ```
 
-服务将在 `http://localhost:3723` 启动。
+服务将在以下地址运行：
+- `http://127.0.0.1:3723`
+- `http://192.168.1.47:3723`
 
 ---
 
@@ -108,13 +121,19 @@ curl http://localhost:3723/ping
 ```
 cyanAIRAG-TTS/
 ├── app/                    # Flask 应用
+│   └── routes.py           # API 路由定义
 ├── services/               # 核心服务
 │   ├── rag_service.py      # RAG 服务
 │   └── tts_service.py      # TTS 服务
 ├── testAndReadme/          # 文档目录 ⭐
+│   ├── THEAI.md           # 项目搭建指南
+│   ├── API使用说明.md      # 完整API文档
+│   └── API快速调用指南.md   # 快速上手指南
 ├── test0223/               # 测试脚本
+├── audio/                  # TTS 音频输出目录
 ├── config.py               # 配置文件
 ├── run.py                  # 启动入口
+├── start.bat              # Windows 启动脚本
 ├── requirements.txt        # 依赖列表
 └── README.md              # 本文档
 ```
@@ -127,9 +146,22 @@ cyanAIRAG-TTS/
 
 - **Embedding**：Qwen/Qwen3-Embedding-0.6B
 - **Reranker**：Qwen/Qwen3-Reranker-0.6B
-- **TTS**：Qwen/Qwen3-TTS-12Hz-1.7B-Base
+- **TTS**：Qwen/Qwen3-TTS-0.6B-CustomVoice（自定义语音模式）
 
 模型会在首次运行时自动下载。
+
+---
+
+## TTS 参数说明
+
+TTS 接口支持以下可调参数：
+
+| 参数 | 默认值 | 范围 | 推荐值 | 说明 |
+|------|--------|------|--------|------|
+| **temperature** | 0.65 | 0.0-2.0 | 0.5-1.0 | 控制生成的随机性，值越低越稳定，值越高越多样 |
+| **top_p** | 0.92 | 0.0-1.0 | 0.8-0.95 | 核采样参数，只保留累积概率达到该值的token |
+
+详细使用方法请参考 `testAndReadme/API使用说明.md`。
 
 ---
 
@@ -147,6 +179,10 @@ A: 查看 `testAndReadme/API快速调用指南.md` 或 `testAndReadme/API使用�
 
 A: 请查看 `testAndReadme/THEAI.md` 中的详细说明。
 
+### Q: 如何调整 TTS 的声音效果？
+
+A: 通过调整 `temperature` 和 `top_p` 参数。详细说明请参考 API 文档。
+
 ---
 
 ## 许可证
@@ -160,4 +196,3 @@ A: 请查看 `testAndReadme/THEAI.md` 中的详细说明。
 - Qwen3 官方文档
 - Flash Attention 2
 - LanceDB 向量数据库
-

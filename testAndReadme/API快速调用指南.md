@@ -1,4 +1,3 @@
-
 # CyanAI API 快速调用指南
 
 ## 前置条件
@@ -214,30 +213,39 @@ curl -X POST http://localhost:3723/rag/clear/all
 
 ## 3. TTS 接口
 
-### 文本转语音（声音克隆）
+### 文本转语音（Custom Voice）
 
 **请求**：
 ```bash
 curl -X POST http://localhost:3723/tts/generate \
   -H "Content-Type: application/json" \
   -d "{
-    \"reference_audio_path\": \"E:\\\\AIlibs\\\\input.wav\",
     \"text\": \"你要说的话\",
-    \"ref_text\": \"参考音频的文本内容\"
+    \"instruct\": \"用自然亲切的语气说\",
+    \"language\": \"Chinese\",
+    \"temperature\": 0.65,
+    \"top_p\": 0.92
   }"
 ```
 
 **参数说明**：
-- `reference_audio_path`：参考音频路径（3-10秒清晰语音）
-- `text`：要合成的文本
-- `ref_text`：参考音频的文本内容（可选，推荐提供）
+- `text`：要合成的文本（必填）
+- `instruct`：语气和表达方式的描述（可选，支持中文长描述）
+- `language`：合成语音的语言（可选，默认为"Chinese"）
+  - 支持的值："auto"、"chinese"、"english"、"japanese"、"korean"、"german"、"french"、"russian"、"portuguese"、"spanish"、"italian"
+- `temperature`：控制生成的随机性（可选，默认为0.65）
+  - 范围：0.0-2.0（推荐0.5-1.0）
+  - 值越低越稳定，值越高越多样
+- `top_p`：核采样参数（可选，默认为0.92）
+  - 范围：0.0-1.0（推荐0.8-0.95）
+  - 只保留累积概率达到该值的token
 
 **响应**：
 ```json
 {
   "status": "success",
   "message": "Audio generated successfully.",
-  "generated_audio_path": "e:\\AIlibs\\audio\\20260223_015323.wav"
+  "generated_audio_path": "e:\\AIlibs\\audio\\20260227_193319.wav"
 }
 ```
 
@@ -277,6 +285,32 @@ for res in results:
     print("---")
 ```
 
+### TTS 生成示例
+
+```python
+import requests
+
+BASE_URL = "http://localhost:3723"
+
+# 生成语音
+resp = requests.post(
+    f"{BASE_URL}/tts/generate",
+    json={
+        "text": "你好，我是yoeawa！",
+        "instruct": "用自然亲切的语气说",
+        "language": "Chinese",
+        "temperature": 0.65,
+        "top_p": 0.92
+    }
+)
+
+result = resp.json()
+if result["status"] == "success":
+    print(f"音频已生成: {result['generated_audio_path']}")
+else:
+    print(f"生成失败: {result['message']}")
+```
+
 ---
 
 ## 快速参考
@@ -294,4 +328,3 @@ for res in results:
 | 清空单个表 | POST | `/rag/clear/table` |
 | 清空所有表 | POST | `/rag/clear/all` |
 | TTS生成 | POST | `/tts/generate` |
-

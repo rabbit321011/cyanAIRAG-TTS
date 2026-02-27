@@ -6,21 +6,28 @@ import torch
 import os
 from datetime import datetime
 
-from services.tts_service import generate_tts_from_reference, run_test_script
+from services.tts_service import generate_tts_from_custom_voice, run_test_script
 
 bp = Blueprint('api', __name__, url_prefix='/')
 
 @bp.route('/tts/generate', methods=['POST'])
 def handle_tts_generation():
     data = request.get_json()
-    if not data or 'reference_audio_path' not in data or 'text' not in data:
-        return jsonify({"status": "error", "message": "Request body must contain 'reference_audio_path' and 'text'"}), 400
+    if not data or 'text' not in data:
+        return jsonify({"status": "error", "message": "Request body must contain 'text'"}), 400
 
-    ref_path = data['reference_audio_path']
     text = data['text']
-    ref_text = data.get('ref_text', None)
+    instruct = data.get('instruct', '')
+    language = data.get('language', 'Chinese')
+    temperature = float(data.get('temperature', 0.65))
+    top_p = float(data.get('top_p', 0.92))
 
-    output_path, error = generate_tts_from_reference(ref_path, text, ref_text)
+    # 验证语言参数
+    valid_languages = ['Chinese', 'English']
+    if language not in valid_languages:
+        return jsonify({"status": "error", "message": f"Invalid language. Must be one of: {', '.join(valid_languages)}"}), 400
+
+    output_path, error = generate_tts_from_custom_voice(text, instruct, language, temperature, top_p)
 
     if error:
         return jsonify({"status": "error", "message": error}), 500

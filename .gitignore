@@ -1,4 +1,3 @@
-
 # Python
 __pycache__/
 *.py[cod]
@@ -24,8 +23,8 @@ wheels/
 # Virtual Environment
 agent-env/
 venv/
-ENV/
 env/
+ENV/
 
 # IDE
 .vscode/
@@ -34,25 +33,45 @@ env/
 *.swo
 *~
 
-# Audio
-audio/*.wav
-audio/*.mp3
-reference_audio/
-
-# LanceDB
-lancedb_data/
-
-# Models (large files, don't commit)
-qwen/
-*.pt
-*.pth
-*.bin
-
 # OS
 .DS_Store
 Thumbs.db
 
-# Test results
-test0223/test_results.json
-test0223/inserted.json
+# Model files (too large for GitHub)
+Qwen3-TTS-0.6B-CustomVoice-base/
+TTSmodel/
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.ckpt
 
+# Audio files
+audio/*.wav
+audio/*.mp3
+audio/*.flac
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test outputs
+test0223/*.wav
+test0223/*.mp3
+test0223/test_output/
+
+# LanceDB
+lancedb/
+*.lance
+
+# Hugging Face cache
+.cache/
+huggingface/
