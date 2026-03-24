@@ -16,7 +16,7 @@ from qwen_tts import Qwen3TTSModel
 import torch
 
 # === 正确加载 0.6B Custom Voice（关键修复） ===
-model_path = r"E:\AIlibs\Qwen3-TTS-0.6B-CustomVoice-base"  # 你之前合并好的目录
+model_path = r"E:\AIlibs\TTSmodel\yoeawa_3_large"  # 你之前合并好的目录
 
 model = Qwen3TTSModel.from_pretrained(
     model_path,

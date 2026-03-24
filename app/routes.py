@@ -22,11 +22,6 @@ def handle_tts_generation():
     temperature = float(data.get('temperature', 0.65))
     top_p = float(data.get('top_p', 0.92))
 
-    # 验证语言参数
-    valid_languages = ['Chinese', 'English']
-    if language not in valid_languages:
-        return jsonify({"status": "error", "message": f"Invalid language. Must be one of: {', '.join(valid_languages)}"}), 400
-
     output_path, error = generate_tts_from_custom_voice(text, instruct, language, temperature, top_p)
 
     if error:
